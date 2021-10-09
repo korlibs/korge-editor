@@ -1,3 +1,5 @@
+package util
+
 import com.soywiz.korge.annotations.*
 import com.soywiz.korge.input.*
 import com.soywiz.korge.ui.*
@@ -11,7 +13,7 @@ import kotlin.reflect.*
 inline fun <T> Container.uiPropertyComboBox(
 	title: String, field: KMutableProperty0<T>, values: List<T>,
 	width: Double = 128.0, height: Double = 20.0,
-): UIPropertyRow = UIPropertyRow(title).also {
+): UIPropertyRow = UIPropertyRow(title, width, height).also {
 		it.container.apply {
 			uiComboBox(items = values)
 		}
@@ -22,6 +24,20 @@ inline fun <reified T : Enum<T>> Container.uiPropertyComboBox(
 	title: String, field: KMutableProperty0<T>,
 	width: Double = 128.0, height: Double = 20.0,
 ): UIPropertyRow = uiPropertyComboBox(title, field, enumValues<T>().toList(), width, height)
+
+@KorgeExperimental
+inline fun Container.uiPropertyCheckBox(
+	title: String, field: KMutableProperty0<Boolean>,
+	width: Double = 128.0, height: Double = 20.0,
+): UIPropertyRow = append(UIPropertyRow(title, width, height)) {
+	this.container.append(uiCheckBox(checked = field.get(), text = "").also {
+		it.onChange {
+			field.set(it.checked)
+		}
+	})
+}
+
+
 
 fun UIEditableNumberPropsList(vararg mut: KMutableProperty0<Double>, min: Double = 0.0, max: Double = 1.0, decimals: Int = 2, clamped: Boolean = true): Array<UIEditableNumberProps> {
 	return mut.map { mut ->

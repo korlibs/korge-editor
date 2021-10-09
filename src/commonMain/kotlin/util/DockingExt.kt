@@ -1,3 +1,5 @@
+package util
+
 import com.soywiz.korge.component.*
 import com.soywiz.korge.view.*
 import com.soywiz.korma.geom.*

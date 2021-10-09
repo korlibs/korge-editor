@@ -1,3 +1,5 @@
+package util
+
 import com.soywiz.kds.iterators.*
 import com.soywiz.klock.*
 import com.soywiz.kmem.*
