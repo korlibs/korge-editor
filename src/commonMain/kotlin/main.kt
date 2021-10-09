@@ -1,26 +1,106 @@
-import com.soywiz.klock.seconds
+import com.soywiz.korag.*
 import com.soywiz.korge.*
-import com.soywiz.korge.tween.*
+import com.soywiz.korge.annotations.*
+import com.soywiz.korge.component.*
+import com.soywiz.korge.component.docking.*
+import com.soywiz.korge.debug.*
+import com.soywiz.korge.particle.*
+import com.soywiz.korge.ui.*
+import com.soywiz.korge.ui.korui.*
 import com.soywiz.korge.view.*
-import com.soywiz.korim.color.Colors
+import com.soywiz.korim.bitmap.*
+import com.soywiz.korim.color.*
 import com.soywiz.korim.format.*
 import com.soywiz.korio.file.std.*
-import com.soywiz.korma.geom.degrees
-import com.soywiz.korma.interpolation.Easing
+import com.soywiz.korma.geom.*
 
-suspend fun main() = Korge(width = 512, height = 512, bgcolor = Colors["#2b2b2b"]) {
-	val minDegrees = (-16).degrees
-	val maxDegrees = (+16).degrees
+@OptIn(KorgeExperimental::class)
+suspend fun main() = Korge(width = 1280, height = 720, bgcolor = Colors["#2b2b2b"], clipBorders = false, scaleMode = ScaleMode.NO_SCALE, scaleAnchor = Anchor.TOP_LEFT) {
+	//val bitmap = resourcesVfs["korge.png"].readBitmap()
+	//val emitterView = emitterView(100, 100, Colors.RED)
+	val emitter = ParticleEmitter()
+	emitter.blendFuncSource = AG.BlendFactor.SOURCE_ALPHA
+	emitter.blendFuncDestination = AG.BlendFactor.DESTINATION_ALPHA
+	val emitterView = particleEmitter(emitter)
+	emitter.texture = Bitmaps.white
+	emitterView.position(100, 100)
+	//UIWindow
+	uiWindow("Properties", 300.0, 500.0) {
+		emitterView.dockedTo(Anchor(0.5, 0.7)) {
+			it.x = (views.actualVirtualWidth - 300.0) * 0.5
+		}
+		it.dragProcessor = { }
+		it.x = 300.0
+		it.dockedTo(Anchor.TOP_RIGHT) {
+			it.x -= 300.0
+			it.scaledHeight = views.actualVirtualHeight.toDouble()
+		}
+		it.isCloseable = false
+		it.container.mobileBehaviour = false
+		it.container.overflowRate = 0.0
+		uiVerticalStack(300.0) {
+			uiText("Particle") { textColor = Colors.RED }
+			uiPropertyNumberRow("MaxParticles", *UIEditableIntPropsList(emitter::maxParticles))
+			uiPropertyComboBox("EmitterType", emitter::emitterType)
+			uiPropertyComboBox("BlendFuncSource", emitter::blendFuncSource)
+			uiPropertyComboBox("BlendFuncDestination", emitter::blendFuncDestination)
+			uiPropertyNumberRow("Angle", *UIEditableAnglePropsList(emitter::angle, emitter::angleVariance))
+			uiPropertyNumberRow("Speed", *UIEditableNumberPropsList(emitter::speed, emitter::speedVariance, min = 0.0, max = +1000.0))
+			uiPropertyNumberRow("Lifespan", *UIEditableNumberPropsList(emitter::lifeSpan, emitter::lifespanVariance, min = -10.0, max = +10.0))
+			uiPropertyNumberRow("Duration", *UIEditableNumberPropsList(emitter::duration, min = -10.0, max = +10.0))
+			uiText("Acceleration") { textColor = Colors.RED }
+			uiPropertyNumberRow("RadialAcceleration", *UIEditableNumberPropsList(emitter::radialAcceleration, emitter::radialAccelVariance, min = -1000.0, max = +1000.0))
+			uiPropertyNumberRow("TangentialAcceleration", *UIEditableNumberPropsList(emitter::tangentialAcceleration, emitter::tangentialAccelVariance, min = -1000.0, max = +1000.0))
+			uiText("Color") { textColor = Colors.RED }
+			uiPropertyNumberRow("Start Color", *UIEditableColorPropsList(emitter::startColor))
+			uiPropertyNumberRow("Start Color Variance", *UIEditableColorPropsList(emitter::startColorVariance))
+			uiPropertyNumberRow("End Color", *UIEditableColorPropsList(emitter::endColor))
+			uiPropertyNumberRow("End Color Variance", *UIEditableColorPropsList(emitter::endColorVariance))
+			uiText("Radial") { textColor = Colors.RED }
+			uiPropertyNumberRow("Gravity", *UIEditablePointPropsList(emitter::gravity, min = -1000.0, max = +1000.0))
+			uiPropertyNumberRow("Min Radius", *UIEditableNumberPropsList(emitter::minRadius, emitter::minRadiusVariance, min = -1000.0, max = +1000.0))
+			uiPropertyNumberRow("Max Radius", *UIEditableNumberPropsList(emitter::maxRadius, emitter::maxRadiusVariance, min = -1000.0, max = +1000.0))
+			uiText("Rotate") { textColor = Colors.RED }
+			uiPropertyNumberRow("RotatePerSecond", *UIEditableAnglePropsList(emitter::rotatePerSecond, emitter::rotatePerSecondVariance))
+			uiPropertyNumberRow("RotationStart", *UIEditableAnglePropsList(emitter::rotationStart, emitter::rotationStartVariance))
+			uiPropertyNumberRow("RotationEnd", *UIEditableAnglePropsList(emitter::rotationEnd, emitter::rotationEndVariance))
+			uiText("Size") { textColor = Colors.RED }
+			uiPropertyNumberRow("StartSize", *UIEditableNumberPropsList(emitter::startSize, emitter::startSizeVariance, min = -1000.0, max = +1000.0))
+			uiPropertyNumberRow("EndSize", *UIEditableNumberPropsList(emitter::endSize, emitter::endSizeVariance, min = -1000.0, max = +1000.0))
 
-	val image = image(resourcesVfs["korge.png"].readBitmap()) {
-		rotation = maxDegrees
-		anchor(.5, .5)
-		scale(.8)
-		position(256, 256)
-	}
+			/*
+			uiEditableValue(this@ParticleEmitterView::localCoords)
+            uiEditableValue(Pair(this@ParticleEmitterView::emitterX, this@ParticleEmitterView::emitterY), min = -1000.0, max = +1000.0, clamp = false, name = "emitterPos")
+            uiEditableValue("Source Position", particle.sourcePosition)
+            uiEditableValue("Source Position Variance", particle.sourcePositionVariance)
+			 */
 
-	while (true) {
-		image.tween(image::rotation[minDegrees], time = 1.seconds, easing = Easing.EASE_IN_OUT)
-		image.tween(image::rotation[maxDegrees], time = 1.seconds, easing = Easing.EASE_IN_OUT)
+
+			uiText("Properties") { textColor = Colors.RED }
+			uiPropertyNumberRow("Alpha", *UIEditableNumberPropsList(emitterView::alpha))
+			uiPropertyNumberRow("Position", *UIEditableNumberPropsList(emitterView::x, emitterView::y, min = -1024.0, max = +1024.0, clamped = false))
+			uiPropertyNumberRow("Size", *UIEditableNumberPropsList(emitterView::width, emitterView::height, min = -1024.0, max = +1024.0, clamped = false))
+			uiPropertyNumberRow("Scale", *UIEditableNumberPropsList(emitterView::scaleX, emitterView::scaleY, min = -1.0, max = +1.0, clamped = false))
+			uiPropertyNumberRow("Rotation", *UIEditableNumberPropsList(emitterView::rotationDeg, min = -360.0, max = +360.0, clamped = true))
+			val skewProp = uiPropertyNumberRow("Skew", *UIEditableNumberPropsList(emitterView::skewXDeg, emitterView::skewYDeg, min = -360.0, max = +360.0, clamped = true))
+			append(UIPropertyRow("Visible")) {
+				this.container.append(uiCheckBox(checked = emitterView.visible, text = "").also {
+					it.onChange {
+						emitterView.visible = it.checked
+					}
+				})
+			}
+		}
 	}
 }
+private var View.rotationDeg: Double
+	get() = rotation.degrees
+	set(value) { rotation = value.degrees }
+
+private var View.skewXDeg: Double
+	get() = skewX.degrees
+	set(value) { skewX = value.degrees }
+
+private var View.skewYDeg: Double
+	get() = skewY.degrees
+	set(value) { skewY = value.degrees }
